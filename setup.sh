@@ -62,8 +62,14 @@ install_debian() {
     curl -fsSL https://deb.nodesource.com/setup_current.x | sudo -E bash -
     sudo apt install -y nodejs
 
-    # Instalação do Fish Shell
-    sudo apt install -y fish
+    # Instalação do Zsh
+    sudo apt install -y zsh
+
+    # Instalação do Spaceship Prompt
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/zsh-users/spaceship-prompt/master/install.sh)"
+
+    # Download do .zshrc
+    curl -o ~/.zshrc https://raw.githubusercontent.com/AllMaciente/setup-linux/main/.zshrc
 
     # Instalação do LazyGit
     LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
@@ -89,12 +95,18 @@ install_fedora() {
     echo "Instalando pacotes para $PRETTY_NAME..."
     sudo dnf update -y
     sudo dnf install -y "${COMMON_APPS[@]}" "${FEDORA_APPS[@]}"
-    sudo dnf install -y fish
+    sudo dnf install -y zsh
     sudo dnf install -y python3 python3-pip
 
     # Instalação do Node.js
     curl -fsSL https://rpm.nodesource.com/setup_current.x | sudo bash -
     sudo dnf install -y nodejs
+
+    # Instalação do Spaceship Prompt
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/zsh-users/spaceship-prompt/master/install.sh)"
+
+    # Download do .zshrc
+    curl -o ~/.zshrc https://raw.githubusercontent.com/AllMaciente/setup-linux/main/.zshrc
 
     # Instalação do LazyGit
     sudo dnf copr enable atim/lazygit -y
@@ -109,11 +121,17 @@ install_arch() {
     echo "Instalando pacotes para $PRETTY_NAME..."
     sudo pacman -Syu --noconfirm
     sudo pacman -S --noconfirm "${COMMON_APPS[@]}" "${ARCH_APPS[@]}"
-    sudo pacman -S --noconfirm fish
+    sudo pacman -S --noconfirm zsh
 
     # Instalação do Node.js
     sudo pacman -S --noconfirm python python-pip
     sudo pacman -S --noconfirm nodejs npm
+
+    # Instalação do Spaceship Prompt
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/zsh-users/spaceship-prompt/master/install.sh)"
+
+    # Download do .zshrc
+    curl -o ~/.zshrc https://raw.githubusercontent.com/AllMaciente/setup-linux/main/.zshrc
 }
 
 # Função para instalar pacotes no openSUSE e derivados
@@ -121,7 +139,7 @@ install_opensuse() {
     echo "Instalando pacotes para $PRETTY_NAME..."
     sudo zypper refresh
     sudo zypper install -y "${COMMON_APPS[@]}" "${OPENSUSE_APPS[@]}"
-    sudo zypper install -y fish
+    sudo zypper install -y zsh
     sudo zypper install -y python3 python3-pip
 
     # Instalação do Node.js
@@ -130,6 +148,12 @@ install_opensuse() {
     sudo zypper ref && sudo zypper in lazygit
     sudo zypper ar https://download.opensuse.org/tumbleweed/repo/oss/ factory-oss
     sudo zypper in eza
+
+    # Instalação do Spaceship Prompt
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/zsh-users/spaceship-prompt/master/install.sh)"
+
+    # Download do .zshrc
+    curl -o ~/.zshrc https://raw.githubusercontent.com/AllMaciente/setup-linux/main/.zshrc
 }
 
 # Função para instalar pacotes de acordo com a distribuição detectada
@@ -156,32 +180,10 @@ install_bydistro() {
     echo "Instalação concluída!"
 }
 
-# Função para configurar o Fish Shell
-configure_fish() {
-    echo "Configurando o Fish shell..."
-    curl -sS https://starship.rs/install.sh | sh
-
-    # Adiciona a inicialização do Starship no config.fish
-    echo 'starship init fish | source' >> ~/.config/fish/config.fish
-
-    # Instalação do Fisher
-    if ! command -v fisher &> /dev/null; then
-        echo "Instalando Fisher..."
-        curl -sL https://git.io/fisher | source
-    fi
-
-    # Instala os plugins do Fisher
-    fisher install jorgebucaran/fisher
-    fisher install PatrickF1/fzf.fish
-    fisher install jorgebucaran/autopair.fish
-
-    echo "Configuração do Fish shell concluída!"
-}
-
-# Função para definir o Fish shell como padrão
-set_fish_as_default() {
-    echo "Definindo o Fish shell como padrão..."
-    chsh -s "$(which fish)"
+# Função para definir o Zsh como padrão
+set_zsh_as_default() {
+    echo "Definindo o Zsh como padrão..."
+    chsh -s "$(which zsh)"
 }
 
 # Função para instalar pacotes CLI adicionais
@@ -195,8 +197,7 @@ install_cli() {
 main() {
     detect_distro
     install_bydistro
-    configure_fish
-    set_fish_as_default
+    set_zsh_as_default
     install_cli
 }
 
