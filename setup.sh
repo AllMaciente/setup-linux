@@ -161,12 +161,17 @@ configure_fish() {
     echo "Configurando o Fish shell..."
     curl -sS https://starship.rs/install.sh | sh
 
-    URL="https://raw.githubusercontent.com/AllMaciente/setup-linux/refs/heads/main/config.fish"
-    mkdir -p ~/.config/fish
-    wget -P ~/.config/fish "$URL"
+    # Adiciona a inicialização do Starship no config.fish
+    echo 'starship init fish | source' >> ~/.config/fish/config.fish
 
     # Instalação do Fisher
-    curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher
+    if ! command -v fisher &> /dev/null; then
+        echo "Instalando Fisher..."
+        curl -sL https://git.io/fisher | source
+    fi
+
+    # Instala os plugins do Fisher
+    fisher install jorgebucaran/fisher
     fisher install PatrickF1/fzf.fish
     fisher install jorgebucaran/autopair.fish
 
