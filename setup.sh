@@ -79,6 +79,9 @@ install_debian() {
     sudo chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list
     sudo apt update
     sudo apt install -y eza
+
+    mkdir -p ~/.local/bin
+    ln -s /usr/bin/batcat ~/.local/bin/bat
 }
 
 # Função para instalar pacotes no Fedora e derivados
