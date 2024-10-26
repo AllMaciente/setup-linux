@@ -31,39 +31,6 @@ OPENSUSE_APPS=(
     fd
 )
 
-# Função para instalar Python
-install_python() {
-    echo "Instalando Python..."
-    if [ "$DISTRO" == "ubuntu" ] || [ "$DISTRO" == "debian" ]; then
-        sudo apt update
-        sudo apt install -y software-properties-common
-        sudo add-apt-repository ppa:deadsnakes/ppa -y
-        sudo apt install -y python3 python3-pip
-    elif [[ "$DISTRO" == "fedora" || "$DISTRO" == "rhel" || "$DISTRO" == "centos" ]]; then
-        sudo dnf install -y python3 python3-pip
-    elif [[ "$DISTRO" == "arch" || "$DISTRO" == "manjaro" ]]; then
-        sudo pacman -Syu --noconfirm python python-pip
-    elif [[ "$DISTRO" == "opensuse-tumbleweed" || "$DISTRO" == "opensuse-leap" ]]; then
-        sudo zypper install -y python3 python3-pip
-    fi
-}
-
-# Função para instalar Node.js e npm
-install_node() {
-    echo "Instalando Node.js e npm..."
-    if [ "$DISTRO" == "ubuntu" ] || [ "$DISTRO" == "debian" ]; then
-        curl -fsSL https://deb.nodesource.com/setup_current.x | sudo -E bash -
-        sudo apt install -y nodejs
-    elif [[ "$DISTRO" == "fedora" || "$DISTRO" == "rhel" || "$DISTRO" == "centos" ]]; then
-        curl -fsSL https://rpm.nodesource.com/setup_current.x | sudo bash -
-        sudo dnf install -y nodejs
-    elif [[ "$DISTRO" == "arch" || "$DISTRO" == "manjaro" ]]; then
-        sudo pacman -S --noconfirm nodejs npm
-    elif [[ "$DISTRO" == "opensuse-tumbleweed" || "$DISTRO" == "opensuse-leap" ]]; then
-        sudo zypper install -y nodejs npm
-    fi
-}
-
 # Função para detectar a distribuição
 detect_distro() {
     if [ -f /etc/os-release ]; then
@@ -80,8 +47,12 @@ install_debian() {
     echo "Instalando pacotes para $PRETTY_NAME..."
     sudo apt update
     sudo apt install -y "${COMMON_APPS[@]}" "${DEBIAN_APPS[@]}"
-    install_python
-    install_node
+    sudo apt update
+	sudo apt install -y software-properties-common
+        sudo add-apt-repository ppa:deadsnakes/ppa -y
+        sudo apt install -y python3 python3-pip
+    curl -fsSL https://deb.nodesource.com/setup_current.x | sudo -E bash -
+        sudo apt install -y nodejs
     sudo apt install -y fish
     LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
     curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
@@ -103,8 +74,9 @@ install_fedora() {
     sudo dnf update -y
     sudo dnf install -y "${COMMON_APPS[@]}" "${FEDORA_APPS[@]}"
 	sudo dnf install -y fish
-    install_python
-    install_node
+     sudo dnf install -y python3 python3-pip
+    curl -fsSL https://rpm.nodesource.com/setup_current.x | sudo bash -
+        sudo dnf install -y nodejs
     sudo dnf copr enable atim/lazygit -y
     sudo dnf install lazygit
 }
@@ -115,8 +87,8 @@ install_arch() {
     sudo pacman -Syu --noconfirm
     sudo pacman -S --noconfirm "${COMMON_APPS[@]}" "${ARCH_APPS[@]}"
 	sudo pacman -S --noconfirm fish
-    install_python
-    install_node
+    sudo pacman -Syu --noconfirm python python-pip
+      sudo pacman -S --noconfirm nodejs npm
 }
 
 # Função para instalar pacotes no openSUSE e derivados
@@ -125,8 +97,8 @@ install_opensuse() {
     sudo zypper refresh
     sudo zypper install -y "${COMMON_APPS[@]}" "${OPENSUSE_APPS[@]}"
 	sudo zypper install -y fish
-    install_python
-    install_node
+    sudo zypper install -y python3 python3-pip
+     sudo zypper install -y nodejs npm
     sudo zypper ar https://download.opensuse.org/repositories/devel:/languages:/go/openSUSE_Factory/devel:languages:go.repo
     sudo zypper ref && sudo zypper in lazygit
     zypper ar https://download.opensuse.org/tumbleweed/repo/oss/ factory-oss
@@ -135,7 +107,7 @@ install_opensuse() {
 
 install_bydistro() {
 	case $DISTRO in
-	        ubuntu | debian)
+	        ubuntu | debian | pop)
 	            install_debian
 	            ;;
 	        fedora | rhel | centos)
