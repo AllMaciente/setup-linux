@@ -17,12 +17,14 @@ COMMON_APPS=(
 # Lista de aplicativos específicos para Debian e derivados
 DEBIAN_APPS=(
     fd-find
+    tilix
 )
 
 # Lista de aplicativos específicos para Fedora e derivados
 FEDORA_APPS=(
     fd-find
     eza
+    tilix
 )
 
 # Lista de aplicativos específicos para Arch Linux e derivados
@@ -30,6 +32,7 @@ ARCH_APPS=(
     fd
     lazygit
     eza
+    tilix
 )
 
 # Lista de aplicativos específicos para openSUSE e derivados
@@ -65,11 +68,6 @@ install_debian() {
     # Instalação do Zsh
     sudo apt install -y zsh
 
-    # Instalação do Spaceship Prompt
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/zsh-users/spaceship-prompt/master/install.sh)"
-
-    # Download do .zshrc
-    curl -o ~/.zshrc https://raw.githubusercontent.com/AllMaciente/setup-linux/main/.zshrc
 
     # Instalação do LazyGit
     LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
@@ -102,11 +100,6 @@ install_fedora() {
     curl -fsSL https://rpm.nodesource.com/setup_current.x | sudo bash -
     sudo dnf install -y nodejs
 
-    # Instalação do Spaceship Prompt
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/zsh-users/spaceship-prompt/master/install.sh)"
-
-    # Download do .zshrc
-    curl -o ~/.zshrc https://raw.githubusercontent.com/AllMaciente/setup-linux/main/.zshrc
 
     # Instalação do LazyGit
     sudo dnf copr enable atim/lazygit -y
@@ -127,11 +120,6 @@ install_arch() {
     sudo pacman -S --noconfirm python python-pip
     sudo pacman -S --noconfirm nodejs npm
 
-    # Instalação do Spaceship Prompt
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/zsh-users/spaceship-prompt/master/install.sh)"
-
-    # Download do .zshrc
-    curl -o ~/.zshrc https://raw.githubusercontent.com/AllMaciente/setup-linux/main/.zshrc
 }
 
 # Função para instalar pacotes no openSUSE e derivados
@@ -148,12 +136,6 @@ install_opensuse() {
     sudo zypper ref && sudo zypper in lazygit
     sudo zypper ar https://download.opensuse.org/tumbleweed/repo/oss/ factory-oss
     sudo zypper in eza
-
-    # Instalação do Spaceship Prompt
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/zsh-users/spaceship-prompt/master/install.sh)"
-
-    # Download do .zshrc
-    curl -o ~/.zshrc https://raw.githubusercontent.com/AllMaciente/setup-linux/main/.zshrc
 }
 
 # Função para instalar pacotes de acordo com a distribuição detectada
@@ -180,24 +162,47 @@ install_bydistro() {
     echo "Instalação concluída!"
 }
 
+install_homebrew(){
+	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+}
+
+
+install_zsh() {
+	 # Instalação do Spaceship Prompt
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/zsh-users/spaceship-prompt/master/install.sh)"
+
+    # Download do .zshrc
+    curl -o ~/.zshrc https://raw.githubusercontent.com/AllMaciente/setup-linux/main/.zshrc
+}
+
 # Função para definir o Zsh como padrão
 set_zsh_as_default() {
     echo "Definindo o Zsh como padrão..."
     chsh -s "$(which zsh)"
 }
 
+
 # Função para instalar pacotes CLI adicionais
 install_cli() {
     pip install pipx
+
     pipx install classifier
+    
     npm install -g tldr
+    tldr --update
+
+    npm install --global speed-test
+
+    npm install -g localtunnel
 }
 
 # Função principal
 main() {
     detect_distro
     install_bydistro
+    install_zsh
     set_zsh_as_default
+    install_homebrew
     install_cli
 }
 
