@@ -1,0 +1,5 @@
+jorgebucaran/fisher
+allmaciente/nav_fish
+jorgebucaran/autopair.fish
+ilancosman/tide@v6
+allmaciente/fishgit

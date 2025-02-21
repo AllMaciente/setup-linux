@@ -1,0 +1,15 @@
+org.kde.okular
+org.localsend.localsend_app
+org.kde.krita
+org.vinegarhq.Sober
+io.github.flattool.Warehouse
+io.github.jeffshee.Hidamari
+it.mijorus.gearlever
+org.audacityteam.Audacity
+com.spotify.Client
+com.obsproject.Studio
+com.obsproject.Studio.Plugin.AdvancedMasks
+com.obsproject.Studio.Plugin.CompositeBlur
+com.obsproject.Studio.Plugin.Draw
+com.obsproject.Studio.Plugin.MoveTransition
+com.obsproject.Studio.Plugin.TransitionTable

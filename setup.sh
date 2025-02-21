@@ -1,210 +1,124 @@
-#!/bin/bash
+#!/bin/sh
 
-# Lista de aplicativos comuns a todas as distribuições
-COMMON_APPS=(
-    git
-    curl
-    vim
-    wget
-    bashtop
-    gh
-    bat
-    fzf
-    ripgrep
-    duf
-)
+# URL do repositório no GitHub
+GITHUB_REPO="https://raw.githubusercontent.com/AllMaciente/setup-linux/main"
+PACKAGES_FILE="packages.txt"
+PLUGINS_FILE="plugins.txt"
 
-# Lista de aplicativos específicos para Debian e derivados
-DEBIAN_APPS=(
-    fd-find
-    tilix
-)
-
-# Lista de aplicativos específicos para Fedora e derivados
-FEDORA_APPS=(
-    fd-find
-    eza
-    tilix
-)
-
-# Lista de aplicativos específicos para Arch Linux e derivados
-ARCH_APPS=(
-    fd
-    lazygit
-    eza
-    tilix
-)
-
-# Lista de aplicativos específicos para openSUSE e derivados
-OPENSUSE_APPS=(
-    fd
-)
-
-# Função para detectar a distribuição Linux
-detect_distro() {
-    if [ -f /etc/os-release ]; then
-        . /etc/os-release
-        DISTRO=$ID
+# Detecta o gerenciador de pacotes disponível
+detect_package_manager() {
+    echo "🔍 Detectando gerenciador de pacotes..."
+    if command -v dnf >/dev/null 2>&1; then
+        echo "✅ DNF detectado (Fedora/RHEL)"
+        PACKAGE_MANAGER="dnf"
+    elif command -v apt >/dev/null 2>&1; then
+        echo "✅ APT detectado (Debian/Ubuntu)"
+        PACKAGE_MANAGER="apt"
+    elif command -v pacman >/dev/null 2>&1; then
+        echo "✅ Pacman detectado (Arch/Manjaro)"
+        PACKAGE_MANAGER="pacman"
     else
-        echo "Distribuição Linux não detectada."
+        echo "❌ Gerenciador de pacotes não suportado!"
         exit 1
     fi
 }
 
-# Função para instalar pacotes no Debian, Ubuntu e derivados
-install_debian() {
-    echo "Instalando pacotes para $PRETTY_NAME..."
-    sudo apt update
-    sudo apt install -y "${COMMON_APPS[@]}" "${DEBIAN_APPS[@]}"
-    sudo apt update
-    sudo apt install -y software-properties-common
-    sudo add-apt-repository ppa:deadsnakes/ppa -y
-    sudo apt install -y python3 python3-pip
-
-    # Instalação do Node.js
-    curl -fsSL https://deb.nodesource.com/setup_current.x | sudo -E bash -
-    sudo apt install -y nodejs
-
-    # Instalação do Zsh
-    sudo apt install -y zsh
-
-
-    # Instalação do LazyGit
-    LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
-    curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
-    tar xf lazygit.tar.gz lazygit
-    sudo install lazygit /usr/local/bin
-
-    # Instalação do Eza
-    sudo apt install -y gpg
-    sudo mkdir -p /etc/apt/keyrings
-    wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc | sudo gpg --dearmor -o /etc/apt/keyrings/gierens.gpg
-    echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" | sudo tee /etc/apt/sources.list.d/gierens.list
-    sudo chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list
-    sudo apt update
-    sudo apt install -y eza
-
-    mkdir -p ~/.local/bin
-    ln -s /usr/bin/batcat ~/.local/bin/bat
-}
-
-# Função para instalar pacotes no Fedora e derivados
-install_fedora() {
-    echo "Instalando pacotes para $PRETTY_NAME..."
-    sudo dnf update -y
-    sudo dnf install -y "${COMMON_APPS[@]}" "${FEDORA_APPS[@]}"
-    sudo dnf install -y zsh
-    sudo dnf install -y python3 python3-pip
-
-    # Instalação do Node.js
-    curl -fsSL https://rpm.nodesource.com/setup_current.x | sudo bash -
-    sudo dnf install -y nodejs
-
-
-    # Instalação do LazyGit
-    sudo dnf copr enable atim/lazygit -y
-    sudo dnf install lazygit
-
-    # Instalação do Eza
-    sudo dnf install -y eza
-}
-
-# Função para instalar pacotes no Arch Linux e derivados (ex: Manjaro)
-install_arch() {
-    echo "Instalando pacotes para $PRETTY_NAME..."
-    sudo pacman -Syu --noconfirm
-    sudo pacman -S --noconfirm "${COMMON_APPS[@]}" "${ARCH_APPS[@]}"
-    sudo pacman -S --noconfirm zsh
-
-    # Instalação do Node.js
-    sudo pacman -S --noconfirm python python-pip
-    sudo pacman -S --noconfirm nodejs npm
-
-}
-
-# Função para instalar pacotes no openSUSE e derivados
-install_opensuse() {
-    echo "Instalando pacotes para $PRETTY_NAME..."
-    sudo zypper refresh
-    sudo zypper install -y "${COMMON_APPS[@]}" "${OPENSUSE_APPS[@]}"
-    sudo zypper install -y zsh
-    sudo zypper install -y python3 python3-pip
-
-    # Instalação do Node.js
-    sudo zypper install -y nodejs npm
-    sudo zypper ar https://download.opensuse.org/repositories/devel:/languages:/go/openSUSE_Factory/devel:languages:go.repo
-    sudo zypper ref && sudo zypper in lazygit
-    sudo zypper ar https://download.opensuse.org/tumbleweed/repo/oss/ factory-oss
-    sudo zypper in eza
-}
-
-# Função para instalar pacotes de acordo com a distribuição detectada
-install_bydistro() {
-    case $DISTRO in
-        ubuntu | debian | pop)
-            install_debian
-            ;;
-        fedora | rhel | centos)
-            install_fedora
-            ;;
-        arch | manjaro)
-            install_arch
-            ;;
-        opensuse*)
-            install_opensuse
-            ;;
-        *)
-            echo "Distribuição não suportada: $DISTRO"
-            exit 1
-            ;;
+# Atualiza o sistema
+update_system() {
+    echo "🔄 Atualizando o sistema..."
+    case "$PACKAGE_MANAGER" in
+        dnf) sudo dnf upgrade -y ;;
+        apt) sudo apt update && sudo apt upgrade -y ;;
+        pacman) sudo pacman -Syu --noconfirm ;;
     esac
-
-    echo "Instalação concluída!"
 }
 
-install_homebrew(){
-	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-}
-
-
-install_zsh() {
-	 # Instalação do Spaceship Prompt
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/zsh-users/spaceship-prompt/master/install.sh)"
-
-    # Download do .zshrc
-    curl -o ~/.zshrc https://raw.githubusercontent.com/AllMaciente/setup-linux/main/.zshrc
-}
-
-# Função para definir o Zsh como padrão
-set_zsh_as_default() {
-    echo "Definindo o Zsh como padrão..."
-    chsh -s "$(which zsh)"
-}
-
-
-# Função para instalar pacotes CLI adicionais
-install_cli() {
-    pip install pipx
-
-    pipx install classifier
+# Baixa o arquivo de pacotes do GitHub
+download_packages_file() {
+    echo "🌐 Baixando lista de pacotes do GitHub..."
+    curl -s -o "$PACKAGES_FILE" "$GITHUB_REPO/$PACKAGES_FILE"
     
-    npm install -g tldr
-    tldr --update
-
-    npm install --global speed-test
-
-    npm install -g localtunnel
+    if [ -s "$PACKAGES_FILE" ]; then
+        echo "✅ Arquivo $PACKAGES_FILE baixado com sucesso!"
+    else
+        echo "❌ Erro ao baixar $PACKAGES_FILE. Nenhum pacote será instalado."
+        rm -f "$PACKAGES_FILE"
+    fi
 }
 
-# Função principal
+# Instala os pacotes necessários
+install_packages() {
+    if [ -f "$PACKAGES_FILE" ]; then
+        echo "📦 Instalando pacotes listados em $PACKAGES_FILE..."
+        PACKAGES=$(grep -v '^#' "$PACKAGES_FILE" | tr '\n' ' ')
+        case "$PACKAGE_MANAGER" in
+            dnf) sudo dnf install -y $PACKAGES ;;
+            apt) sudo apt install -y $PACKAGES ;;
+            pacman) sudo pacman -S --noconfirm $PACKAGES ;;
+        esac
+    else
+        echo "⚠️ Nenhuma lista de pacotes encontrada. Pulando a instalação."
+    fi
+}
+
+# Define o Fish como shell padrão
+set_fish_default() {
+    if command -v fish >/dev/null 2>&1; then
+        echo "🔄 Configurando Fish como shell padrão..."
+        chsh -s "$(command -v fish)"
+        echo "✅ Fish foi definido como padrão. Reinicie a sessão para aplicar as mudanças."
+    else
+        echo "⚠️ Fish não foi instalado corretamente."
+        exit 1
+    fi
+}
+
+# Instala o Fisher (gerenciador de plugins do Fish)
+install_fisher() {
+    if command -v fish >/dev/null 2>&1; then
+        echo "🐟 Instalando Fisher..."
+        fish -c "curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher"
+    else
+        echo "⚠️ Fish não encontrado. Pulando a instalação do Fisher."
+    fi
+}
+
+# Baixa o arquivo de plugins do GitHub
+download_plugins_file() {
+    echo "🌐 Baixando lista de plugins do GitHub..."
+    curl -s -o "$PLUGINS_FILE" "$GITHUB_REPO/$PLUGINS_FILE"
+    
+    if [ -s "$PLUGINS_FILE" ]; then
+        echo "✅ Arquivo $PLUGINS_FILE baixado com sucesso!"
+    else
+        echo "❌ Erro ao baixar $PLUGINS_FILE. Nenhum plugin será instalado."
+        rm -f "$PLUGINS_FILE"
+    fi
+}
+
+# Instala plugins do Fish a partir do arquivo baixado
+install_fish_plugins() {
+    if command -v fish >/dev/null 2>&1 && [ -f "$PLUGINS_FILE" ]; then
+        echo "📜 Instalando plugins do Fish a partir de $PLUGINS_FILE..."
+        while IFS= read -r plugin; do
+            [ -n "$plugin" ] && fish -c "fisher install $plugin"
+        done < "$PLUGINS_FILE"
+    else
+        echo "⚠️ Fish não encontrado ou $PLUGINS_FILE ausente. Pulando a instalação dos plugins."
+    fi
+}
+
+# Executa as funções em ordem
 main() {
-    detect_distro
-    install_bydistro
-    install_zsh
-    set_zsh_as_default
-    install_homebrew
-    install_cli
+    detect_package_manager
+    update_system
+    download_packages_file
+    install_packages
+    set_fish_default
+    install_fisher
+    download_plugins_file
+    install_fish_plugins
+    echo "🎉 Setup concluído!"
 }
 
-# Executa a função principal
 main
